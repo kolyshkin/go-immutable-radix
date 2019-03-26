@@ -632,6 +632,30 @@ func TestWalkPath(t *testing.T) {
 	}
 }
 
+func ExampleIterator_Seek() {
+	r := New()
+	keys := []string{
+		"aaa",
+		"foo",
+		"foo/bar",
+		"zzz",
+	}
+	for _, k := range keys {
+		r, _, _ = r.Insert([]byte(k), nil)
+	}
+
+	iter := r.Root().Iterator()
+	iter.SeekPrefix([]byte("foo"))
+	for {
+		k, _, ok := iter.Next()
+		if !ok {
+			break
+		}
+		fmt.Printf("%s, ", k)
+	}
+	// Output: foo, foo/bar,
+}
+
 func TestIteratePrefix(t *testing.T) {
 	r := New()
 
@@ -708,6 +732,10 @@ func TestIteratePrefix(t *testing.T) {
 			"z",
 			[]string{"zipzap"},
 		},
+		exp{
+			"nosuch",
+			[]string{},
+		},
 	}
 
 	root := r.Root()
@@ -726,6 +754,7 @@ func TestIteratePrefix(t *testing.T) {
 			}
 			out = append(out, string(key))
 		}
+		t.Logf("seek %q: got %v", test.inp, out)
 		if !reflect.DeepEqual(out, test.out) {
 			t.Fatalf("mis-match: %d %v %v", idx, out, test.out)
 		}
